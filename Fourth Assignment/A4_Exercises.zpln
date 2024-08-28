@@ -1,0 +1,1490 @@
+﻿{
+  "paragraphs": [
+    {
+      "text": "%md\n# Big Data: Spark SQL, Dataframes and Datasets (exercises)\nObjectives:\n* Learn about the different options for loading a csv file into a dataframe, and how to handle its column types.\n* Get to know the important aspects when working with UDFs.\n* Walk through the data process from begin to end yourself with the trees datasets.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:53:44+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1738847644",
+      "id": "paragraph_1635254010978_1392141924",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:23224",
+      "dateFinished": "2022-02-11T11:53:44+0000",
+      "dateStarted": "2022-02-11T11:53:44+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h1>Big Data: Spark SQL, Dataframes and Datasets (exercises)</h1>\n<p>Objectives:</p>\n<ul>\n<li>Learn about the different options for loading a csv file into a dataframe, and how to handle its column types.</li>\n<li>Get to know the important aspects when working with UDFs.</li>\n<li>Walk through the data process from begin to end yourself with the trees datasets.</li>\n</ul>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n## Exercise 1\na. Find out what the options `header`, `inferSchema` and `multiLine` do.\nb. Examine the differences between `art1`, `art2` and `art3`. _Hint: look also for documentation online._",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:52:03+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_961745642",
+      "id": "paragraph_1635254701014_1066254055",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23225",
+      "dateFinished": "2022-02-11T11:52:03+0000",
+      "dateStarted": "2022-02-11T11:52:03+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Exercise 1</h2>\n<p>a. Find out what the options <code>header</code>, <code>inferSchema</code> and <code>multiLine</code> do.<br />\nb. Examine the differences between <code>art1</code>, <code>art2</code> and <code>art3</code>. <em>Hint: look also for documentation online.</em></p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval art1 = spark.read\n        .format(\"csv\")\n        .option(\"header\", true)\n        .option(\"inferSchema\", \"true\")\n        .option(\"multiLine\", true)\n        .load(\"file:///opt/hadoop/share/data/kunstopstraat-kunstwerk.csv\").cache()\nart1.printSchema()\nart1.show(5)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1242079743",
+      "id": "paragraph_1634999714012_1084062604",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23226"
+    },
+    {
+      "text": "%spark\nimport org.apache.spark.sql.types._\n\nval schema = new StructType()\n      .add(\"name\",StringType,true)\n      .add(\"year\",IntegerType,true)\n      .add(\"artist\",StringType,true)\n      .add(\"location\",StringType,true)\n      .add(\"latitude\",FloatType,true)\n      .add(\"longitude\",FloatType,true)\n      .add(\"description\",StringType,true)\n      .add(\"ownership\",StringType,true)\n      .add(\"source\",StringType,true)\n      .add(\"url\",StringType,true)\n      \nval art2 = spark.read\n        .format(\"csv\")\n        .option(\"header\", true)\n        .option(\"multiLine\", true)\n        .schema(schema)\n        .load(\"file:///opt/hadoop/share/data/kunstopstraat-kunstwerk.csv\").cache()\n\nart2.printSchema()\nart2.show(5)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_160530210",
+      "id": "paragraph_1634999761296_2034303706",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23227"
+    },
+    {
+      "text": "%spark\nimport spark.implicits._\n\ncase class Art(name:String, year:Integer, latitude:Float, longitude:Float)\n\nval art3 = art1.select($\"naam\" as \"name\",\n                         $\"bouwjaar\".cast(IntegerType) as \"year\",\n                         $\"latitude\".cast(FloatType) as \"latitude\",\n                         $\"longitude\".cast(FloatType) as \"longitude\").as[Art].cache()\n\nart3.printSchema()\nart3.show(5)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1485364029",
+      "id": "paragraph_1634999736758_283700667",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23228"
+    },
+    {
+      "text": "%md\n## Exercise 2\nSpark UDFs are a useful feature of the Spark SQL module. Read the following two pages to get an idea how they work: \n* https://sparkbyexamples.com/spark/spark-sql-udf/\n* https://medium.com/@achilleus/spark-udfs-we-can-use-them-but-should-we-use-them-2c5a561fde6d\n\nAfter reading it, consider the example in the three cell blocks below, and write down (or fix and understand):\na. Three things that go wrong in casting the prices to floats.\nb. Why they go wrong. \n\n(_Hint: you only see the first error in the output._)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:52:00+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_219310765",
+      "id": "paragraph_1635254864559_1860405463",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23229",
+      "dateFinished": "2022-02-11T11:52:00+0000",
+      "dateStarted": "2022-02-11T11:52:00+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Exercise 2</h2>\n<p>Spark UDFs are a useful feature of the Spark SQL module. Read the following two pages to get an idea how they work:</p>\n<ul>\n<li><a href=\"https://sparkbyexamples.com/spark/spark-sql-udf/\">https://sparkbyexamples.com/spark/spark-sql-udf/</a></li>\n<li><a href=\"https://medium.com/@achilleus/spark-udfs-we-can-use-them-but-should-we-use-them-2c5a561fde6d\">https://medium.com/@achilleus/spark-udfs-we-can-use-them-but-should-we-use-them-2c5a561fde6d</a></li>\n</ul>\n<p>After reading it, consider the example in the three cell blocks below, and write down (or fix and understand):<br />\na. Three things that go wrong in casting the prices to floats.<br />\nb. Why they go wrong.</p>\n<p>(<em>Hint: you only see the first error in the output.</em>)</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval df = spark.createDataFrame(Seq(\n  (21749, \"cucumber\", \"1,34\"),\n  (22432, \"carrots\", \"0,85\"),\n  (26945, \"broccoli\", \"1,14\"),\n  (28795, \"onions\", \"unknown\"),\n  (29361, \"garlic\", null),\n  (31679, \"potatoes\", \"4,09\")\n  )).toDF(\"id\", \"product\", \"price\")\ndf.printSchema()\ndf.show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_891139191",
+      "id": "paragraph_1636993975455_1580054044",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23230"
+    },
+    {
+      "text": "%spark\n// Use Java's NumberFormat to parse values by their locale \nimport java.text.NumberFormat\nimport java.util.Locale\nval nf = NumberFormat.getInstance(Locale.forLanguageTag(\"nl\")); // Handle floats written as 0,05 instead of 0.05\n\ndef convToFloat(s: String): Float = {\n    nf.parse(s).floatValue\n}",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_2065605501",
+      "id": "paragraph_1636993947332_1384452419",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23231"
+    },
+    {
+      "text": "%spark.sql\nselect id, product, price, convToFloat(price) as price_1\nfrom df",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "id": "string",
+                      "product": "string",
+                      "price": "string",
+                      "price_1": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1158337239",
+      "id": "paragraph_1636993954569_444940884",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23232"
+    },
+    {
+      "text": "%md\n## Exercise 3\nIn this exercise, it is time for you to program a bit more yourself. In the reader, we asked ourselves: _Which neighbourhood has the most artworks?_. Now, you are going on a similar mission to find out: _\"Which neighbourhood has the most trees?\"_. \n\nYou will be doing this by working with the two datasets GRN_BOMEN and GRN_BOMEN_PART. These contain data on all trees in Nijmegen, one for the trees maintained by the municipality of Nijmegen, and one for the trees in the hands of private persons (dutch: particulier).\n\nLet's start by enabling the Sedona SQL and by downloading the datasets (from our Github page).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:57+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_465578410",
+      "id": "paragraph_1635254932551_120196180",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23233",
+      "dateFinished": "2022-02-11T11:51:57+0000",
+      "dateStarted": "2022-02-11T11:51:57+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Exercise 3</h2>\n<p>In this exercise, it is time for you to program a bit more yourself. In the reader, we asked ourselves: <em>Which neighbourhood has the most artworks?</em>. Now, you are going on a similar mission to find out: <em>&ldquo;Which neighbourhood has the most trees?&rdquo;</em>.</p>\n<p>You will be doing this by working with the two datasets GRN_BOMEN and GRN_BOMEN_PART. These contain data on all trees in Nijmegen, one for the trees maintained by the municipality of Nijmegen, and one for the trees in the hands of private persons (dutch: particulier).</p>\n<p>Let&rsquo;s start by enabling the Sedona SQL and by downloading the datasets (from our Github page).</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nimport org.apache.spark.SparkConf\nimport org.apache.spark.sql.SparkSession\nimport org.apache.spark.SparkContext\n\nimport org.apache.spark.serializer.KryoSerializer\nimport org.apache.sedona.core.serde.SedonaKryoRegistrator\nimport org.apache.sedona.sql.utils.SedonaSQLRegistrator\n\nval conf = new SparkConf()\nconf.setAppName(\"SedonaRunnableExample\") // Change this to a proper name\nconf.setMaster(\"local[*]\") // Delete this if run in cluster mode\n\n// Enable Sedona custom Kryo serializer\nconf.set(\"spark.serializer\",\"org.apache.spark.serializer.KryoSerializer\")\nconf.set(\"spark.kryo.registrator\", \"org.apache.sedona.core.serde.SedonaKryoRegistrator\")\n\nimplicit val sparkSession = SparkSession.builder().config(conf).getOrCreate()\nval sc = sparkSession.sparkContext\n\nSedonaSQLRegistrator.registerAll(sparkSession)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_2032427054",
+      "id": "paragraph_1635255337667_1570405293",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23234"
+    },
+    {
+      "text": "%sh\nmkdir -p /opt/hadoop/share/data\ncd /opt/hadoop/share/data\npwd\necho GEO_IND_WIJKEN data...\n[ ! -f GEO_IND_WIJKEN.csv ] \\\n  && wget --quiet https://rubigdata.github.io/course/data/GEO_IND_WIJKEN.csv \\\n  && echo Downloaded GEO_IND_WIJKEN data || echo GEO_IND_WIJKEN data already exists\necho GRN_BOMEN_PART data...\n[ ! -f GRN_BOMEN_PART.csv ] \\\n  && wget --quiet https://rubigdata.github.io/course/data/GRN_BOMEN_PART.csv \\\n  && echo Downloaded GRN_BOMEN_PART data || echo GRN_BOMEN_PART data already exists\necho GRN_BOMEN data...\n[ ! -f GRN_BOMEN.csv ] \\\n  && wget --quiet https://rubigdata.github.io/course/data/GRN_BOMEN.csv \\\n  && echo Downloaded GRN_BOMEN data || echo GRN_BOMEN data already exists",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_794450551",
+      "id": "paragraph_1635252633821_1349866196",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23235"
+    },
+    {
+      "text": "%md\n### Exercise 3.1\na. First, read in the `quarterDATA` the same way as is done in the reader. Second, create the dataframe `quarters` of `quarterDATA` with the columns `id`, `name` and `coordinates` (in epsg:4326 format), also the same way as is done in the reader.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:50+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1186265830",
+      "id": "paragraph_1632995802951_2034529485",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23236",
+      "dateFinished": "2022-02-11T11:51:50+0000",
+      "dateStarted": "2022-02-11T11:51:50+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.1</h3>\n<p>a. First, read in the <code>quarterDATA</code> the same way as is done in the reader. Second, create the dataframe <code>quarters</code> of <code>quarterDATA</code> with the columns <code>id</code>, <code>name</code> and <code>coordinates</code> (in epsg:4326 format), also the same way as is done in the reader.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval quarterDATA = //",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:42:36+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_226844696",
+      "id": "paragraph_1634308938571_1464238867",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23237"
+    },
+    {
+      "text": "%spark\nval quarters = //",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:42:48+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_2128584528",
+      "id": "paragraph_1635944892800_839368712",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23238"
+    },
+    {
+      "text": "%md\nb. Now, create a dataframe `treesM` yourself of the GRN_BOMEN dataset (from the Municipality of Nijmegen). Select columns `id`, `plantjaar` and `geometrie` (as `id`, `year` and `geometry`) with types _Integer_, _Integer_ and _String_. \n\n| id | year | geometry   |\n|--------------|:--------------:|----------------------|\n| 29895        | 1990           | POINT (181035.526... |\n| 29939        | 1990           | POINT (181029.517... | \n| 29937        | 1990           | POINT (180990.216... | \n| 29912        | 1990           | POINT (180698.004... | ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:48+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1722495436",
+      "id": "paragraph_1635261617269_1389401141",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23239",
+      "dateFinished": "2022-02-11T11:51:48+0000",
+      "dateStarted": "2022-02-11T11:51:48+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>b. Now, create a dataframe <code>treesM</code> yourself of the GRN_BOMEN dataset (from the Municipality of Nijmegen). Select columns <code>id</code>, <code>plantjaar</code> and <code>geometrie</code> (as <code>id</code>, <code>year</code> and <code>geometry</code>) with types <em>Integer</em>, <em>Integer</em> and <em>String</em>.</p>\n<table>\n<thead>\n<tr><th>id</th><th align=\"center\">year</th><th>geometry</th></tr>\n</thead>\n<tbody>\n<tr><td>29895</td><td align=\"center\">1990</td><td>POINT (181035.526&hellip;</td></tr>\n<tr><td>29939</td><td align=\"center\">1990</td><td>POINT (181029.517&hellip;</td></tr>\n<tr><td>29937</td><td align=\"center\">1990</td><td>POINT (180990.216&hellip;</td></tr>\n<tr><td>29912</td><td align=\"center\">1990</td><td>POINT (180698.004&hellip;</td></tr>\n</tbody>\n</table>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// empty cell for b",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:43:13+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_534046854",
+      "id": "paragraph_1635255240858_991416134",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23240"
+    },
+    {
+      "text": "%md\nc. Show the statistics of the dataset.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:46+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1932982513",
+      "id": "paragraph_1635261643999_855039448",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23241",
+      "dateFinished": "2022-02-11T11:51:46+0000",
+      "dateStarted": "2022-02-11T11:51:46+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>c. Show the statistics of the dataset.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// empty cell for c",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:43:28+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_774319553",
+      "id": "paragraph_1635255399492_1326756295",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23242"
+    },
+    {
+      "text": "%md\nd. Look at `year`. Try to understand in what cases these 0 values can influence your analysis.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:44+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_783140233",
+      "id": "paragraph_1635261733866_1233145459",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23243",
+      "dateFinished": "2022-02-11T11:51:44+0000",
+      "dateStarted": "2022-02-11T11:51:44+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>d. Look at <code>year</code>. Try to understand in what cases these 0 values can influence your analysis.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\nIt's okay to not handle them right now for the exercises, since we only want to find the neighbourhood with the most trees. \nHowever, if you would like to do some more analyis at the end, don't forget to think about the `null`/0 values!",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:44+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1876376541",
+      "id": "paragraph_1635260170985_390906931",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23244",
+      "dateFinished": "2022-02-11T11:51:44+0000",
+      "dateStarted": "2022-02-11T11:51:44+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>It&rsquo;s okay to not handle them right now for the exercises, since we only want to find the neighbourhood with the most trees.<br />\nHowever, if you would like to do some more analyis at the end, don&rsquo;t forget to think about the <code>null</code>/0 values!</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\ne. Create a dataframe `treesP` for the GRN_BOMEN_PART dataset, with the same columns and column types as `treesM`.\n\n| id | year | geometry   |\n|----|:----:|------------|\n|102|1950|POINT (188622.214...|\n|103|1950|POINT (188619.228...|\n|104|1940|POINT (188647.345...|\n|105|1960|POINT (187983.454...| ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:43+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_126385336",
+      "id": "paragraph_1634309105768_515429617",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23245",
+      "dateFinished": "2022-02-11T11:51:43+0000",
+      "dateStarted": "2022-02-11T11:51:43+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>e. Create a dataframe <code>treesP</code> for the GRN_BOMEN_PART dataset, with the same columns and column types as <code>treesM</code>.</p>\n<table>\n<thead>\n<tr><th>id</th><th align=\"center\">year</th><th>geometry</th></tr>\n</thead>\n<tbody>\n<tr><td>102</td><td align=\"center\">1950</td><td>POINT (188622.214&hellip;</td></tr>\n<tr><td>103</td><td align=\"center\">1950</td><td>POINT (188619.228&hellip;</td></tr>\n<tr><td>104</td><td align=\"center\">1940</td><td>POINT (188647.345&hellip;</td></tr>\n<tr><td>105</td><td align=\"center\">1960</td><td>POINT (187983.454&hellip;</td></tr>\n</tbody>\n</table>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// empty cell for e",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:43:53+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_723048969",
+      "id": "paragraph_1635255425115_1472342569",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23246"
+    },
+    {
+      "text": "%md\n### Exercise 3.2\n\nIn this exercise, we want to union the two datasets `treesM` and `treesP` together, such that our new dataframe `trees` looks like the following:\n\n| id    | year  | geometry             | ownership |\n|-------|:-----:|---------------------:|-----------|\n| 1     |  1940 | POINT (188315.652... | M         |\n| ...   |  ...  | ...                  | M         |\n| 87720 |  0    | POINT (187831.980... | M         |\n| 87721 |  1910 | POINT (189749.527... | P         |\n| ...   |  ...  | ...                  | P         |\n| 89869 |  1930 | POINT (187951.042... | P         |\n\n* Change the id's from `treesP` to unique values (non-overlapping with the other dataset) by adding 87720 to them (the max value of `treesM`). Do you need a UDF for this?\n* Add column `ownership`.\n\n_Hint: you can change or add columns with function `withColumn`, and don't forget: 'Google is your best friend'._",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:41+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1374856996",
+      "id": "paragraph_1634309122112_1143440124",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23247",
+      "dateFinished": "2022-02-11T11:51:41+0000",
+      "dateStarted": "2022-02-11T11:51:41+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.2</h3>\n<p>In this exercise, we want to union the two datasets <code>treesM</code> and <code>treesP</code> together, such that our new dataframe <code>trees</code> looks like the following:</p>\n<table>\n<thead>\n<tr><th>id</th><th align=\"center\">year</th><th align=\"right\">geometry</th><th>ownership</th></tr>\n</thead>\n<tbody>\n<tr><td>1</td><td align=\"center\">1940</td><td align=\"right\">POINT (188315.652&hellip;</td><td>M</td></tr>\n<tr><td>&hellip;</td><td align=\"center\">&hellip;</td><td align=\"right\">&hellip;</td><td>M</td></tr>\n<tr><td>87720</td><td align=\"center\">0</td><td align=\"right\">POINT (187831.980&hellip;</td><td>M</td></tr>\n<tr><td>87721</td><td align=\"center\">1910</td><td align=\"right\">POINT (189749.527&hellip;</td><td>P</td></tr>\n<tr><td>&hellip;</td><td align=\"center\">&hellip;</td><td align=\"right\">&hellip;</td><td>P</td></tr>\n<tr><td>89869</td><td align=\"center\">1930</td><td align=\"right\">POINT (187951.042&hellip;</td><td>P</td></tr>\n</tbody>\n</table>\n<ul>\n<li>Change the id&rsquo;s from <code>treesP</code> to unique values (non-overlapping with the other dataset) by adding 87720 to them (the max value of <code>treesM</code>). Do you need a UDF for this?</li>\n<li>Add column <code>ownership</code>.</li>\n</ul>\n<p><em>Hint: you can change or add columns with function <code>withColumn</code>, and don&rsquo;t forget: &lsquo;Google is your best friend&rsquo;.</em></p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// empty cell for 3.2",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:45:32+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710767_1627188987",
+      "id": "paragraph_1636044290707_231833171",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23248"
+    },
+    {
+      "text": "%spark\n// Check for any unexpected statistics\ntrees.describe().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_1648593945",
+      "id": "paragraph_1636045302450_2119600621",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23249"
+    },
+    {
+      "text": "%spark\n// Check for any duplicate id's, should be empty!\ntrees.groupBy(\"id\").count().filter(\"count >=2\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_512384148",
+      "id": "paragraph_1636045380268_1279507000",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23250"
+    },
+    {
+      "text": "%spark\n// Check for column \"ownership\"\ntrees.groupBy(\"ownership\").count().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_343645408",
+      "id": "paragraph_1636047895759_1234455346",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23251"
+    },
+    {
+      "text": "%md\nDid you also inspect/check some rows of the dataframe? Once you believe your code works correctly, you can move on!",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:36+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_1158101413",
+      "id": "paragraph_1636048846116_1110204781",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23252",
+      "dateFinished": "2022-02-11T11:51:36+0000",
+      "dateStarted": "2022-02-11T11:51:36+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Did you also inspect/check some rows of the dataframe? Once you believe your code works correctly, you can move on!</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n### Exercise 3.3\nThe final step before joining the trees to its quarters, is transforming the tree coordinates to the right coordinate system. Use what you've learnt at the transformation of the quarters and art coordinates to transform these tree coordinates. \n\nCreate the new dataframe `treesT` with the correct `coordinates` instead of the old `geometry` coordinates.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:37+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_193248732",
+      "id": "paragraph_1634309134562_534108997",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23253",
+      "dateFinished": "2022-02-11T11:51:37+0000",
+      "dateStarted": "2022-02-11T11:51:37+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.3</h3>\n<p>The final step before joining the trees to its quarters, is transforming the tree coordinates to the right coordinate system. Use what you&rsquo;ve learnt at the transformation of the quarters and art coordinates to transform these tree coordinates.</p>\n<p>Create the new dataframe <code>treesT</code> with the correct <code>coordinates</code> instead of the old <code>geometry</code> coordinates.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n### Exercise 3.4\nIt is time to join `treesT` and `quarters` together to link the trees to their quarter! \na. Create the joined dataframe `treesQuarters`:\n\n| id    | year  | coordinates             | ownership | quarter |\n|-------|:-----:|---------------------:|----------:|:------------- |\n| 29895 |  1990 | POINT (5.76484718... | M         | Bijsterhuizen |\n| 29939 |  1990 | POINT (5.76475793... | M         | Bijsterhuizen |\n| 29937 |  1990 | POINT (5.76418819... | M         | Bijsterhuizen |",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:33+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_2056412511",
+      "id": "paragraph_1635944650633_2005886027",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23254",
+      "dateFinished": "2022-02-11T11:51:33+0000",
+      "dateStarted": "2022-02-11T11:51:33+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.4</h3>\n<p>It is time to join <code>treesT</code> and <code>quarters</code> together to link the trees to their quarter!<br />\na. Create the joined dataframe <code>treesQuarters</code>:</p>\n<table>\n<thead>\n<tr><th>id</th><th align=\"center\">year</th><th align=\"right\">coordinates</th><th align=\"right\">ownership</th><th align=\"left\">quarter</th></tr>\n</thead>\n<tbody>\n<tr><td>29895</td><td align=\"center\">1990</td><td align=\"right\">POINT (5.76484718&hellip;</td><td align=\"right\">M</td><td align=\"left\">Bijsterhuizen</td></tr>\n<tr><td>29939</td><td align=\"center\">1990</td><td align=\"right\">POINT (5.76475793&hellip;</td><td align=\"right\">M</td><td align=\"left\">Bijsterhuizen</td></tr>\n<tr><td>29937</td><td align=\"center\">1990</td><td align=\"right\">POINT (5.76418819&hellip;</td><td align=\"right\">M</td><td align=\"left\">Bijsterhuizen</td></tr>\n</tbody>\n</table>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\nb. Save your newly created dataframe to Parquet. This is to work around the bug that we might encounter again, like we did in the Reader.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:32+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710768_1829907012",
+      "id": "paragraph_1635947463851_553506856",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23255",
+      "dateFinished": "2022-02-11T11:51:32+0000",
+      "dateStarted": "2022-02-11T11:51:32+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>b. Save your newly created dataframe to Parquet. This is to work around the bug that we might encounter again, like we did in the Reader.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n### Exercise 3.5\na. Reload `treesQuarters` from Parquet and create a temporary view of it.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:31+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710769_1494675102",
+      "id": "paragraph_1635947475376_1746185134",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23256",
+      "dateFinished": "2022-02-11T11:51:31+0000",
+      "dateStarted": "2022-02-11T11:51:31+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.5</h3>\n<p>a. Reload <code>treesQuarters</code> from Parquet and create a temporary view of it.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\nb. Find out which neighbourhood has the most trees, (by using dataframe operators or SQL).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:30+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710769_1731172908",
+      "id": "paragraph_1636051688573_517332912",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23257",
+      "dateFinished": "2022-02-11T11:51:30+0000",
+      "dateStarted": "2022-02-11T11:51:30+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>b. Find out which neighbourhood has the most trees, (by using dataframe operators or SQL).</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\nc. Display the trees in Heijendaal. \n* Make one visualisation with the Geospark-zeppelin tool of the Heijendaal trees maintained by the municipality.\n* Make one visualisation of the Heijendaal trees owned by private persons.\n\nWhat do you notice?",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:30+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710769_1727341965",
+      "id": "paragraph_1636051853609_180613739",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23258",
+      "dateFinished": "2022-02-11T11:51:30+0000",
+      "dateStarted": "2022-02-11T11:51:30+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>c. Display the trees in Heijendaal.</p>\n<ul>\n<li>Make one visualisation with the Geospark-zeppelin tool of the Heijendaal trees maintained by the municipality.</li>\n<li>Make one visualisation of the Heijendaal trees owned by private persons.</li>\n</ul>\n<p>What do you notice?</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n### Exercise 3.6\nInstead of joining on quarters, we can also use polygons in predicates. Below you find a dataframe with the perimeters of the three parks in the city centre: Kronenburgerpark, Hunnerpark, and Valkhofpark. Can you find out how many trees are in these parks, and which one has the most?",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:51:29+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710770_1095191030",
+      "id": "paragraph_1636547335950_282919735",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23259",
+      "dateFinished": "2022-02-11T11:51:29+0000",
+      "dateStarted": "2022-02-11T11:51:29+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Exercise 3.6</h3>\n<p>Instead of joining on quarters, we can also use polygons in predicates. Below you find a dataframe with the perimeters of the three parks in the city centre: Kronenburgerpark, Hunnerpark, and Valkhofpark. Can you find out how many trees are in these parks, and which one has the most?</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nimport spark.implicits._\n\nval parks = Seq((\"Kronenburgerpark\", \"POLYGON ((5.8564934 51.8483835, 5.8569789 51.8483321, 5.8582395 51.8473164, 5.8584327 51.8469850, 5.8592588 51.8452236, 5.8575824 51.8447514, 5.8577541 51.8445774, 5.8576709 51.8445409, 5.8570862 51.8446983, 5.8567160 51.8451988, 5.8561957 51.8461897, 5.8562279 51.8464200, 5.8561715 51.8471838, 5.8561769 51.8474506, 5.8564934 51.8483835))\"), (\"Hunnerpark\", \"POLYGON ((5.8725303 51.8486138, 5.8733243 51.8470397, 5.8734208 51.8463272, 5.8731633 51.8459229, 5.8727825 51.8454921, 5.8714038 51.8460256, 5.8719349 51.8468839, 5.8713984 51.8469966, 5.8706421 51.8468375, 5.8705080 51.8469966, 5.8714038 51.8473081, 5.8717793 51.8476826, 5.8717954 51.8480935, 5.8718491 51.8483354, 5.8720636 51.8485111, 5.8725303 51.8486138))\"), (\"Valkhofpark\", \"POLYGON ((5.8687484 51.8469668, 5.8690166 51.8484580, 5.8699018 51.8484580, 5.8705348 51.8484481, 5.8706313 51.8486536, 5.8712429 51.8485276, 5.8716452 51.8481896, 5.8717579 51.8478814, 5.8716881 51.8476594, 5.8714682 51.8473645, 5.8710176 51.8471888, 5.8703899 51.8470364, 5.8695585 51.8469535, 5.8687484 51.8469668))\")).toDF(\"park\", \"polygon\")\n\nparks.show()\nparks.createOrReplaceTempView(\"parks\")",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:41:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710770_1656006437",
+      "id": "paragraph_1636544086651_397471157",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "READY",
+      "$$hashKey": "object:23260"
+    },
+    {
+      "text": "%md\n## Wrap up:\nThis is the end of assignment 4! Feel free to do some more stuff with the data. You can also open a new notebook and do whatever you like, you now know how to handle columnar data in Spark. At [Nijmegen Open Data](https://opendata.nijmegen.nl/), you can find more datasets (not all datasets work correctly though), using some of your own data is also possible.\n\nExport your Exercises notebook by clicking `Export this note (zpln)` in the toolbar (do not export it as IPython, because it can mess up the cells) and submit your Zeppelin Notebook to the assignment box on Brightspace. After that, you can do the quiz to check your answers. If you have any questions left after that, do not hesistate and come to the lab sessions to discuss your assignment (or ask your question online in the matrix room).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:54:31+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644579710771_1243579057",
+      "id": "paragraph_1638890818414_1355736462",
+      "dateCreated": "2022-02-11T11:41:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:23261",
+      "dateFinished": "2022-02-11T11:54:31+0000",
+      "dateStarted": "2022-02-11T11:54:31+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Wrap up:</h2>\n<p>This is the end of assignment 4! Feel free to do some more stuff with the data. You can also open a new notebook and do whatever you like, you now know how to handle columnar data in Spark. At <a href=\"https://opendata.nijmegen.nl/\">Nijmegen Open Data</a>, you can find more datasets (not all datasets work correctly though), using some of your own data is also possible.</p>\n<p>Export your Exercises notebook by clicking <code>Export this note (zpln)</code> in the toolbar (do not export it as IPython, because it can mess up the cells) and submit your Zeppelin Notebook to the assignment box on Brightspace. After that, you can do the quiz to check your answers. If you have any questions left after that, do not hesistate and come to the lab sessions to discuss your assignment (or ask your question online in the matrix room).</p>\n\n</div>"
+          }
+        ]
+      }
+    }
+  ],
+  "name": "A4_Exercises",
+  "id": "2GUCEJSGT",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.9.0",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {},
+  "path": "/A4_Exercises"
+}

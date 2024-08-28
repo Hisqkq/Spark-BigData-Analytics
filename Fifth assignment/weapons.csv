@@ -1,0 +1,14 @@
+name,num_hands,speed,method
+Dagger,1,Fastest,Stab
+Hatchet,1,Fast,Slash
+Sword,1,Fast,Stab
+Mace,1,Fastest,Crush
+Scimitar,1,Fastest,Slash
+Longsword,1,Fast,Slash
+Warhammer,1,Average,Crush
+Battleaxe,1,Average,Slash
+Two-handed sword,2,Average,Slash
+Halberd,2,Average,Slash
+Spear,2,Average,Stab
+Hasta,1,Fast,Stab
+Claw,1,Fastest,Slash

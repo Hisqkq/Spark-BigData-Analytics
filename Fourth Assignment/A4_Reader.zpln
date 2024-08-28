@@ -1,0 +1,3897 @@
+﻿{
+  "paragraphs": [
+    {
+      "text": "%md\n# Big Data: Spark SQL, Dataframes and Datasets\nThis reader is to make you familiar with the Spark `Dataset` and related older `Dataframe` (now equivalent to `Dataset[Row]`) APIs, as well as the [Spark SQL](https://spark.apache.org/docs/latest/sql-programming-guide.html) front-end with query optimizer built on top of these APIs.\n* In part I, we will be introducing dataframes together with using Apache’s framework [Sedona](https://sedona.apache.org/) (formerly GeoSpark) that is built to process geospatial data. \n* In part II, we will show you an example on how to use UDFs (user-defined functions). This is useful when Spark SQL's built-in functions do not suffice anymore and you'd like more freedom in processing your dataframes. ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:22+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_1475193783",
+      "id": "paragraph_1637005910878_1682263600",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:27147",
+      "dateFinished": "2022-02-11T11:58:22+0000",
+      "dateStarted": "2022-02-11T11:58:22+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h1>Big Data: Spark SQL, Dataframes and Datasets</h1>\n<p>This reader is to make you familiar with the Spark <code>Dataset</code> and related older <code>Dataframe</code> (now equivalent to <code>Dataset[Row]</code>) APIs, as well as the <a href=\"https://spark.apache.org/docs/latest/sql-programming-guide.html\">Spark SQL</a> front-end with query optimizer built on top of these APIs.</p>\n<ul>\n<li>In part I, we will be introducing dataframes together with using Apache’s framework <a href=\"https://sedona.apache.org/\">Sedona</a> (formerly GeoSpark) that is built to process geospatial data.</li>\n<li>In part II, we will show you an example on how to use UDFs (user-defined functions). This is useful when Spark SQL&rsquo;s built-in functions do not suffice anymore and you&rsquo;d like more freedom in processing your dataframes.</li>\n</ul>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n## Part I: Nijmegen Open Data\nWe take a tour on using dataframes while analyzing [Nijmegen Open Data](https://opendata.nijmegen.nl/) provided by the city council of Nijmegen. In the exercises, you will be working with another Open Dataset from Nijmegen. The data in this Reader contains information about Artworks, (i.e., its name, year of construction, location).\n\nBut first, we are going to add Sedona to our Spark. Its [SedonaSQL](https://sedona.apache.org/tutorial/sql/) comes with a variety of built-in functions we can use, and by enabling the visualisation support in Zeppelin, we can display Geometric Points on a map.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:21+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_293765989",
+      "id": "paragraph_1634293407927_1322259704",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:21+0000",
+      "dateFinished": "2022-02-11T11:58:21+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27148",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Part I: Nijmegen Open Data</h2>\n<p>We take a tour on using dataframes while analyzing <a href=\"https://opendata.nijmegen.nl/\">Nijmegen Open Data</a> provided by the city council of Nijmegen. In the exercises, you will be working with another Open Dataset from Nijmegen. The data in this Reader contains information about Artworks, (i.e., its name, year of construction, location).</p>\n<p>But first, we are going to add Sedona to our Spark. Its <a href=\"https://sedona.apache.org/tutorial/sql/\">SedonaSQL</a> comes with a variety of built-in functions we can use, and by enabling the visualisation support in Zeppelin, we can display Geometric Points on a map.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n### Adding Sedona to Spark\n* Go to the Spark Interpreter (http://localhost:9001/#/interpreter) or by clicking on the Interpreter in the dropdown menu that you see after clicking on the username in the top right corner of the browser window (in our case, the username is \"anonymous\"); you may want to do this in a different browser window or tab. \n* Scroll down to the Spark Interpreter.\n* In the properties table, add the following three packages at the row of `spark.jars.packages` (comma-separated list):\n\n_org.datasyslab:geotools-wrapper:geotools-24.0,org.apache.sedona:sedona-python-adapter-3.0_2.12:1.0.1-incubating,org.apache.sedona:sedona-viz-3.0_2.12:1.0.1-incubating_\n\n* Save and restart the interpreter. When you had any running notebooks, its progress is lost and you need to rerun any already executed cells.\n* Execute the cell below. This creates a sparksession including our just added Sedona and registers the SedonaSQLRegistrator, so we can use the functions of the [SedonaSQL](https://sedona.apache.org/tutorial/sql/).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:20+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_136123115",
+      "id": "paragraph_1635002592027_774510453",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:20+0000",
+      "dateFinished": "2022-02-11T11:58:20+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27149",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Adding Sedona to Spark</h3>\n<ul>\n<li>Go to the Spark Interpreter (<a href=\"http://localhost:9001/#/interpreter\">http://localhost:9001/#/interpreter</a>) or by clicking on the Interpreter in the dropdown menu that you see after clicking on the username in the top right corner of the browser window (in our case, the username is &ldquo;anonymous&rdquo;); you may want to do this in a different browser window or tab.</li>\n<li>Scroll down to the Spark Interpreter.</li>\n<li>In the properties table, add the following three packages at the row of <code>spark.jars.packages</code> (comma-separated list):</li>\n</ul>\n<p><em>org.datasyslab:geotools-wrapper:geotools-24.0,org.apache.sedona:sedona-python-adapter-3.0_2.12:1.0.1-incubating,org.apache.sedona:sedona-viz-3.0_2.12:1.0.1-incubating</em></p>\n<ul>\n<li>Save and restart the interpreter. When you had any running notebooks, its progress is lost and you need to rerun any already executed cells.</li>\n<li>Execute the cell below. This creates a sparksession including our just added Sedona and registers the SedonaSQLRegistrator, so we can use the functions of the <a href=\"https://sedona.apache.org/tutorial/sql/\">SedonaSQL</a>.</li>\n</ul>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nimport org.apache.spark.SparkConf\nimport org.apache.spark.sql.SparkSession\nimport org.apache.spark.SparkContext\n\nimport org.apache.spark.serializer.KryoSerializer\nimport org.apache.sedona.core.serde.SedonaKryoRegistrator\nimport org.apache.sedona.sql.utils.SedonaSQLRegistrator\n\nval conf = new SparkConf()\nconf.setAppName(\"SedonaRunnableExample\") // Change this to a proper name\nconf.setMaster(\"local[*]\") // Delete this if run in cluster mode\n\n// Enable Sedona custom Kryo serializer\nconf.set(\"spark.serializer\",\"org.apache.spark.serializer.KryoSerializer\")\nconf.set(\"spark.kryo.registrator\", \"org.apache.sedona.core.serde.SedonaKryoRegistrator\")\n\nimplicit val sparkSession = SparkSession.builder().config(conf).getOrCreate()\nval sc = sparkSession.sparkContext\n\nSedonaSQLRegistrator.registerAll(sparkSession)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:44:30+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_518709195",
+      "id": "paragraph_1634902274453_1291384653",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:44:30+0000",
+      "dateFinished": "2022-02-11T10:44:54+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27150"
+    },
+    {
+      "text": "%md\n### Downloading the datasets\nTo make sure every student uses the same datasets, we put the datasets on our GitHub page. Put the datasets on the container using the following cell command. It is guarded with a test on file existence to avoid downloading it multiple times when you rerun the same cell.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:18+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_660815168",
+      "id": "paragraph_1634294329651_1292928538",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27151",
+      "dateFinished": "2022-02-11T11:58:18+0000",
+      "dateStarted": "2022-02-11T11:58:18+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Downloading the datasets</h3>\n<p>To make sure every student uses the same datasets, we put the datasets on our GitHub page. Put the datasets on the container using the following cell command. It is guarded with a test on file existence to avoid downloading it multiple times when you rerun the same cell.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%sh\nmkdir -p /opt/hadoop/share/data\ncd /opt/hadoop/share/data\npwd\necho Artworks data...\n[ ! -f kunstopstraat-kunstwerk.csv ] \\\n  && wget --quiet https://rubigdata.github.io/course/data/kunstopstraat-kunstwerk.csv \\\n  && echo Downloaded artworks data || echo Artworks file already exists\necho GEO_IND_WIJKEN data...\n[ ! -f GEO_IND_WIJKEN.csv ] \\\n  && wget --quiet https://rubigdata.github.io/course/data/GEO_IND_WIJKEN.csv \\\n  && echo Downloaded GEO_IND_WIJKEN data || echo GEO_IND_WIJKEN data already exists",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:45:42+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983909_1196106031",
+      "id": "paragraph_1634294532574_1976090211",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:45:42+0000",
+      "dateFinished": "2022-02-11T10:45:45+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27152"
+    },
+    {
+      "text": "%md\n## Artworks in Nijmegen\nOur main goal of today is to find out: _Which neighbourhood of Nijmegen has the most artworks?_. \nWe are going to do that by reading the Artworks dataset into a dataframe. This dataframe contains Artworks with its location in latitude and longitude. \n\nUnfortunately, we do not know the neighbourhood from this immediately, so we will load another dataset with the coordinates of the neighbourhoods and join the two datasets together. You'll see more about that later, let's first load our artworks csv file!",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:13+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_315644182",
+      "id": "paragraph_1634294541358_329117456",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27153",
+      "dateFinished": "2022-02-11T11:58:13+0000",
+      "dateStarted": "2022-02-11T11:58:13+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Artworks in Nijmegen</h2>\n<p>Our main goal of today is to find out: <em>Which neighbourhood of Nijmegen has the most artworks?</em>.<br />\nWe are going to do that by reading the Artworks dataset into a dataframe. This dataframe contains Artworks with its location in latitude and longitude.</p>\n<p>Unfortunately, we do not know the neighbourhood from this immediately, so we will load another dataset with the coordinates of the neighbourhoods and join the two datasets together. You&rsquo;ll see more about that later, let&rsquo;s first load our artworks csv file!</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval art = spark.read\n        .format(\"csv\")\n        .option(\"header\", true)\n        .option(\"inferSchema\", \"true\")\n        .option(\"multiLine\", true)\n        .load(\"file:///opt/hadoop/share/data/kunstopstraat-kunstwerk.csv\").cache()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:03+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=2",
+              "$$hashKey": "object:29560"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=3",
+              "$$hashKey": "object:29561"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1123387788",
+      "id": "paragraph_1632996084218_464342712",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:03+0000",
+      "dateFinished": "2022-02-11T10:46:04+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27154"
+    },
+    {
+      "text": "%spark\nart.printSchema()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:04+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1176398634",
+      "id": "paragraph_1633366648711_804302844",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:04+0000",
+      "dateFinished": "2022-02-11T10:46:04+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27155"
+    },
+    {
+      "text": "%spark\nart.describe().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:04+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=4",
+              "$$hashKey": "object:29655"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1640736807",
+      "id": "paragraph_1634898265642_1770873707",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:04+0000",
+      "dateFinished": "2022-02-11T10:46:07+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27156"
+    },
+    {
+      "text": "%md\n\nWith the option `inferSchema`, we let Spark try to infer the schema by iterating over the data (at least) once more. Sometimes, this is sufficient to get the correct column types, e.g., years are read as type `Int`. However, sometimes this automatic converting fails and then you can infer the schema manually. We can do this by either creating a `StructType` explaining the format of the csv file, or: \n\nThe Dataset API supports a more structured interface to data, so it is also possible to define a `case class` to represent the data. This ensures type safety. ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:10+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_2069149365",
+      "id": "paragraph_1634908394823_1595983115",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:10+0000",
+      "dateFinished": "2022-02-11T11:58:10+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27157",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>With the option <code>inferSchema</code>, we let Spark try to infer the schema by iterating over the data (at least) once more. Sometimes, this is sufficient to get the correct column types, e.g., years are read as type <code>Int</code>. However, sometimes this automatic converting fails and then you can infer the schema manually. We can do this by either creating a <code>StructType</code> explaining the format of the csv file, or:</p>\n<p>The Dataset API supports a more structured interface to data, so it is also possible to define a <code>case class</code> to represent the data. This ensures type safety.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\ncase class Art(name:String, year:Integer, latitude:Float, longitude:Float)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:07+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_582434997",
+      "id": "paragraph_1634897753697_1322059925",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:07+0000",
+      "dateFinished": "2022-02-11T10:46:08+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27158"
+    },
+    {
+      "text": "%spark\nimport spark.implicits._\nimport org.apache.spark.sql.types._\n\nval artDF = art.select($\"naam\" as \"name\",\n                        $\"bouwjaar\".cast(IntegerType) as \"year\",\n                        $\"latitude\".cast(FloatType) as \"latitude\",\n                        $\"longitude\".cast(FloatType) as \"longitude\").as[Art].cache()\nartDF.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:08+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=5",
+              "$$hashKey": "object:29785"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1029907797",
+      "id": "paragraph_1634897966198_1117685980",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:08+0000",
+      "dateFinished": "2022-02-11T10:46:10+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27159"
+    },
+    {
+      "text": "%md\nLet's display a summary of the statistics with `describe` and `show`. Before moving on, can you spot two things that are noteworthy?",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:07+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_739525150",
+      "id": "paragraph_1634908457037_1429177955",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:07+0000",
+      "dateFinished": "2022-02-11T11:58:07+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27160",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Let&rsquo;s display a summary of the statistics with <code>describe</code> and <code>show</code>. Before moving on, can you spot two things that are noteworthy?</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartDF.describe().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:10+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=6",
+              "$$hashKey": "object:29873"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_4576821",
+      "id": "paragraph_1634898312236_1718957819",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:10+0000",
+      "dateFinished": "2022-02-11T10:46:10+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27161"
+    },
+    {
+      "text": "%md\n### Intermezzo: what to do with null values?\nAs you can see in the cell above, not all columns have an equal count. This means that these columns contain some `null` values. We have to think about these before moving on. There are several options, and one is not necessarily more right or wrong as the other. It is often up to you as a Data Scientist what to do with these values and depends on the goal of your research.\n* Can we proceed without these records? This can be an easy solutions if there are not that many records containing `null` values and only a small fraction of the data (e.g., 45 out of 100K records) are lost. This is less useful if the most interesting information is hidden in these `null` values or when the fraction of `null` values is considerably large.\n* Can you try to determine where the `null` values come from? Do you have the domain knowledge to understand how the labelling took place? Maybe a chat with the owners of the dataset can teach you how these values were assigned. \n* Or, take a look at the original csv file. Maybe something in your own pre-processing went wrong.\n\nLet's display the records with `null` values in the latitude and longitude columns, because these columns are important to our research.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:06+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1233316782",
+      "id": "paragraph_1634295005438_481133514",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:06+0000",
+      "dateFinished": "2022-02-11T11:58:06+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27162",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Intermezzo: what to do with null values?</h3>\n<p>As you can see in the cell above, not all columns have an equal count. This means that these columns contain some <code>null</code> values. We have to think about these before moving on. There are several options, and one is not necessarily more right or wrong as the other. It is often up to you as a Data Scientist what to do with these values and depends on the goal of your research.</p>\n<ul>\n<li>Can we proceed without these records? This can be an easy solutions if there are not that many records containing <code>null</code> values and only a small fraction of the data (e.g., 45 out of 100K records) are lost. This is less useful if the most interesting information is hidden in these <code>null</code> values or when the fraction of <code>null</code> values is considerably large.</li>\n<li>Can you try to determine where the <code>null</code> values come from? Do you have the domain knowledge to understand how the labelling took place? Maybe a chat with the owners of the dataset can teach you how these values were assigned.</li>\n<li>Or, take a look at the original csv file. Maybe something in your own pre-processing went wrong.</li>\n</ul>\n<p>Let&rsquo;s display the records with <code>null</code> values in the latitude and longitude columns, because these columns are important to our research.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartDF.filter(\"latitude IS NULL or longitude IS NULL\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:11+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=7",
+              "$$hashKey": "object:29961"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_592973348",
+      "id": "paragraph_1634898425984_239267715",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:11+0000",
+      "dateFinished": "2022-02-11T10:46:11+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27163"
+    },
+    {
+      "text": "%md\nHmm... something must have been wrong in the csv file or in our parsing. Let's for now not dive more into this. If you are interested, you can take a look at the csv file. For the sake of simplicity in this reader, we will simply remove the records with `null` values.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:05+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1590030012",
+      "id": "paragraph_1634898616146_84481412",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:05+0000",
+      "dateFinished": "2022-02-11T11:58:05+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27164",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Hmm&hellip; something must have been wrong in the csv file or in our parsing. Let&rsquo;s for now not dive more into this. If you are interested, you can take a look at the csv file. For the sake of simplicity in this reader, we will simply remove the records with <code>null</code> values.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark \nval artDF_cleaner = artDF.filter(\"latitude IS NOT NULL and longitude IS NOT NULL\")\nartDF_cleaner.describe().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:11+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=8",
+              "$$hashKey": "object:30049"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983910_1469243321",
+      "id": "paragraph_1635167749411_302213996",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:11+0000",
+      "dateFinished": "2022-02-11T10:46:12+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27165"
+    },
+    {
+      "text": "%md\nBut wait, something else in the data was off too, remember? Take a look at the query below:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:04+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1890532331",
+      "id": "paragraph_1635167828052_952760623",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:04+0000",
+      "dateFinished": "2022-02-11T11:58:04+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27166",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>But wait, something else in the data was off too, remember? Take a look at the query below:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartDF_cleaner.filter(\"year > 2022\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:12+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=9",
+              "$$hashKey": "object:30137"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_822105280",
+      "id": "paragraph_1634898584303_635954838",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:12+0000",
+      "dateFinished": "2022-02-11T10:46:13+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27167"
+    },
+    {
+      "text": "%md\n\nThese are records that do have a location, but its year of construction is given '9999'. For our research 'which neighbourhood has the most artworks?', these values are not a problem, but for any analysis related to the year of construction, like the development (of art) in Nijmegen over the years, this does raise a problem. Instead of removing the whole records (the coordinates are valueable!), we will replace the '9999' values back to `null` values.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:58:02+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_540398808",
+      "id": "paragraph_1635165854960_418004119",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:58:02+0000",
+      "dateFinished": "2022-02-11T11:58:02+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27168",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>These are records that do have a location, but its year of construction is given &lsquo;9999&rsquo;. For our research &lsquo;which neighbourhood has the most artworks?&rsquo;, these values are not a problem, but for any analysis related to the year of construction, like the development (of art) in Nijmegen over the years, this does raise a problem. Instead of removing the whole records (the coordinates are valueable!), we will replace the &lsquo;9999&rsquo; values back to <code>null</code> values.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval artDF_cleaned = artDF_cleaner.withColumn(\"year\", when($\"year\" === \"9999\", lit(null)).otherwise($\"year\"))\nartDF_cleaned.describe().show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:13+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=10",
+              "$$hashKey": "object:30225"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1880646712",
+      "id": "paragraph_1635166159399_1407378352",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:13+0000",
+      "dateFinished": "2022-02-11T10:46:14+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27169"
+    },
+    {
+      "text": "%spark\nartDF_cleaned.filter(\"year > 2022\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:14+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=11",
+              "$$hashKey": "object:30273"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1533976294",
+      "id": "paragraph_1635166813897_151262919",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:14+0000",
+      "dateFinished": "2022-02-11T10:46:14+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27170"
+    },
+    {
+      "text": "%spark\nartDF_cleaned.filter(\"year IS NULL\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:14+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=12",
+              "$$hashKey": "object:30321"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_836006104",
+      "id": "paragraph_1635166848234_704450137",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:14+0000",
+      "dateFinished": "2022-02-11T10:46:14+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27171"
+    },
+    {
+      "text": "%md\n## SQL Temporary views\nSo far, we have only executed SQL operators on dataframes directly, like this:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:59+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1085526458",
+      "id": "paragraph_1635000213485_541367115",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:59+0000",
+      "dateFinished": "2022-02-11T11:57:59+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27172",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>SQL Temporary views</h2>\n<p>So far, we have only executed SQL operators on dataframes directly, like this:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartDF_cleaned.filter(\"year >= 1940 and year <= 1945\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:14+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=13",
+              "$$hashKey": "object:30409"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_214368051",
+      "id": "paragraph_1634899367098_851707181",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:14+0000",
+      "dateFinished": "2022-02-11T10:46:15+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27173"
+    },
+    {
+      "text": "%md\n\nHowever, you are not restricted to building query plans yourself by applying operators to dataframes; instead, you can also use the SQL interface, and, mix and match SQL querying with follow-up operations using the Data Frame API, or even convert the data back to RDDs and continue to perform analyses directly working with RDDs.\n\nUsing SQL is most convenient when queries get larger and more complicated.\n\nBefore being able to use SQL, we need to make a virtual table (view) of the dataframe. ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:57+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_516692230",
+      "id": "paragraph_1634908667853_635548027",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:57+0000",
+      "dateFinished": "2022-02-11T11:57:57+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27174",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>However, you are not restricted to building query plans yourself by applying operators to dataframes; instead, you can also use the SQL interface, and, mix and match SQL querying with follow-up operations using the Data Frame API, or even convert the data back to RDDs and continue to perform analyses directly working with RDDs.</p>\n<p>Using SQL is most convenient when queries get larger and more complicated.</p>\n<p>Before being able to use SQL, we need to make a virtual table (view) of the dataframe.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartDF_cleaned.createOrReplaceTempView(\"artView\")",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:15+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1308272433",
+      "id": "paragraph_1634900254388_1555518597",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:15+0000",
+      "dateFinished": "2022-02-11T10:46:15+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27175"
+    },
+    {
+      "text": "%md\nNow, we can use SQL directly on the `artView` table:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:56+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_60406799",
+      "id": "paragraph_1635172128599_978749476",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:56+0000",
+      "dateFinished": "2022-02-11T11:57:56+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27176",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Now, we can use SQL directly on the <code>artView</code> table:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nspark.sql(\"SELECT * FROM artView WHERE year >= 1940 and year <= 1945\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:15+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=14",
+              "$$hashKey": "object:30579"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_2140509342",
+      "id": "paragraph_1634900329846_1966895877",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:15+0000",
+      "dateFinished": "2022-02-11T10:46:16+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27177"
+    },
+    {
+      "text": "%md\n\nSo far, we have used `%spark` and `%md` cells only, but the Spark interpreter also defines a specific type of cell for SQL queries, using the `%spark.sql` directive. The Spark SQL interpreter uses the fact that results in SQL have a regular structure (mathematical relations, usually displayed as tables) to improve the rendering of the results. You get a table with scrollbars, and can also display the data using a variety of charts (not that useful for this result though).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:53+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_662601305",
+      "id": "paragraph_1635001777892_1533546366",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:53+0000",
+      "dateFinished": "2022-02-11T11:57:53+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27178",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>So far, we have used <code>%spark</code> and <code>%md</code> cells only, but the Spark interpreter also defines a specific type of cell for SQL queries, using the <code>%spark.sql</code> directive. The Spark SQL interpreter uses the fact that results in SQL have a regular structure (mathematical relations, usually displayed as tables) to improve the rendering of the results. You get a table with scrollbars, and can also display the data using a variety of charts (not that useful for this result though).</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nSELECT * FROM artView WHERE year >= 1940 and year <= 1945",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:59:05+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "year": "string",
+                      "latitude": "string",
+                      "longitude": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "stackedAreaChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "lineChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "name",
+                  "index": 0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "year",
+                  "index": 1,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_99954126",
+      "id": "paragraph_1634900373244_607685484",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:59:05+0000",
+      "dateFinished": "2022-02-11T11:59:05+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27179"
+    },
+    {
+      "text": "%md\n_Table View vs Dataframe Object_\n\nTemporary views in Spark SQL are session-scoped, so tables like `artView` will disappear if the session that creates it terminates. If you want to have a temporary view that is shared among all sessions and keep alive until the Spark application terminates, you can create a [global](https://spark.apache.org/docs/latest/sql-getting-started.html) temporary view. \n\nHowever, for both, no physical data is created based on the result-set of the SQL query. (Remember this, because if you want to use dataframe operators again, there is no dataframe object to call from!). To read the table into a dataframe object, you can use the code below:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:52+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983911_1854745186",
+      "id": "paragraph_1635171232740_1356708671",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:52+0000",
+      "dateFinished": "2022-02-11T11:57:52+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27180",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p><em>Table View vs Dataframe Object</em></p>\n<p>Temporary views in Spark SQL are session-scoped, so tables like <code>artView</code> will disappear if the session that creates it terminates. If you want to have a temporary view that is shared among all sessions and keep alive until the Spark application terminates, you can create a <a href=\"https://spark.apache.org/docs/latest/sql-getting-started.html\">global</a> temporary view.</p>\n<p>However, for both, no physical data is created based on the result-set of the SQL query. (Remember this, because if you want to use dataframe operators again, there is no dataframe object to call from!). To read the table into a dataframe object, you can use the code below:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval artView = spark.table(\"artView\")",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:16+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_156248953",
+      "id": "paragraph_1635247209288_219993571",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:16+0000",
+      "dateFinished": "2022-02-11T10:46:16+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27181"
+    },
+    {
+      "text": "%md\n## Let's show it on a map!\n\nNow that we know how to work with `%spark.sql` and Temporary Views, let's continue with a feature from Sedona/Geospark. We can display the artworks on a map by creating a Geometric Point from the `latitude` and `longitude` coordinates.\n\nWe enable Map display by opening the dropdown menu in the top right corner again. This time, we go to Helium. There, we enable the `geospark-zeppelin` visualization support. If you now reload the notebook (just the notebook in the browser) and execute the cell below, you will notice that a new icon in the visualization options, a tiny globe, appeared. Click on it, and then click on the widget settings to enter the correct columns. \n* `coordinates` in the Geometry column \n* (Possibly) `name` or `year` in the Info column",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:50+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_1280817190",
+      "id": "paragraph_1634901456209_922486182",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:50+0000",
+      "dateFinished": "2022-02-11T11:57:50+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27182",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Let&rsquo;s show it on a map!</h2>\n<p>Now that we know how to work with <code>%spark.sql</code> and Temporary Views, let&rsquo;s continue with a feature from Sedona/Geospark. We can display the artworks on a map by creating a Geometric Point from the <code>latitude</code> and <code>longitude</code> coordinates.</p>\n<p>We enable Map display by opening the dropdown menu in the top right corner again. This time, we go to Helium. There, we enable the <code>geospark-zeppelin</code> visualization support. If you now reload the notebook (just the notebook in the browser) and execute the cell below, you will notice that a new icon in the visualization options, a tiny globe, appeared. Click on it, and then click on the widget settings to enter the correct columns.</p>\n<ul>\n<li><code>coordinates</code> in the Geometry column</li>\n<li>(Possibly) <code>name</code> or <code>year</code> in the Info column</li>\n</ul>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nSELECT name, year, latitude, longitude, ST_Point(CAST(longitude AS Decimal(24,20)), CAST(latitude AS Decimal(24,20))) AS coordinates \nFROM artView",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:16+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": true,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "year": "string",
+                      "latitude": "string",
+                      "longitude": "string",
+                      "coordinates": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "geospark-zeppelin": {
+                  "geometry": {
+                    "name": "coordinates",
+                    "index": 4,
+                    "aggr": "sum"
+                  },
+                  "info": {
+                    "name": "name",
+                    "index": 0,
+                    "aggr": "sum"
+                  }
+                }
+              },
+              "commonSetting": {}
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=16",
+              "$$hashKey": "object:30837"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_1209828650",
+      "id": "paragraph_1634902387476_1627291306",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:16+0000",
+      "dateFinished": "2022-02-11T10:46:17+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27183"
+    },
+    {
+      "text": "%md\nWow! There are our artworks!\n\nWhat did we do? We created an extra column `coordinates` with Sedona's SQL function [ST_Point](https://sedona.apache.org/api/sql/Constructor/). We will use this column later on to match it to the correct neighbourhood. So, we not simply want to see the results of the query above, but we also want to use this new created column in next SQL queries. For this, we need a new temporary view, including this new column. We will call this view `artMap`. We can execute the same SQL query again, but now whilst creating an object, or we can create the temporary view directly. Examine the differences between the two code blocks below and look at what exactly is created.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:48+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_264304848",
+      "id": "paragraph_1635000290119_882074506",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:48+0000",
+      "dateFinished": "2022-02-11T11:57:48+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27184",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Wow! There are our artworks!</p>\n<p>What did we do? We created an extra column <code>coordinates</code> with Sedona&rsquo;s SQL function <a href=\"https://sedona.apache.org/api/sql/Constructor/\">ST_Point</a>. We will use this column later on to match it to the correct neighbourhood. So, we not simply want to see the results of the query above, but we also want to use this new created column in next SQL queries. For this, we need a new temporary view, including this new column. We will call this view <code>artMap</code>. We can execute the same SQL query again, but now whilst creating an object, or we can create the temporary view directly. Examine the differences between the two code blocks below and look at what exactly is created.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval artMap = spark.sql(\"SELECT name, year, latitude, longitude, ST_Point(CAST(longitude AS Decimal(24,20)), CAST(latitude AS Decimal(24,20))) AS coordinates from artView\")\nartMap.createOrReplaceTempView(\"artMap\")\nartMap.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:17+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=17",
+              "$$hashKey": "object:30925"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_1681809359",
+      "id": "paragraph_1634902013060_1264323247",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:17+0000",
+      "dateFinished": "2022-02-11T10:46:17+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27185"
+    },
+    {
+      "text": "%spark.sql\nCREATE OR REPLACE TEMP VIEW artMap AS\n    SELECT name, year, latitude, longitude, ST_Point(CAST(longitude AS Decimal(24,20)), CAST(latitude AS Decimal(24,20))) AS coordinates \n    FROM artView",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:17+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_913282683",
+      "id": "paragraph_1635171472716_480904212",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:17+0000",
+      "dateFinished": "2022-02-11T10:46:18+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27186"
+    },
+    {
+      "text": "%md\n\nWhich temporary views have we created so far? Sometimes, it becomes a bit of a mess (try to avoid this with proper names!).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:45+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_1588244314",
+      "id": "paragraph_1635171663864_1165859554",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:45+0000",
+      "dateFinished": "2022-02-11T11:57:45+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27187",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Which temporary views have we created so far? Sometimes, it becomes a bit of a mess (try to avoid this with proper names!).</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// Metadata from the catalogue\nspark.catalog.listDatabases.show(false)\nspark.catalog.listTables.show(false)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:18+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_654474327",
+      "id": "paragraph_1635001247060_291674400",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:18+0000",
+      "dateFinished": "2022-02-11T10:46:18+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27188"
+    },
+    {
+      "text": "%md\n## Which neighbourhood has the most artworks?\nWe will continue our journey. The following csv file consists of the neighbourhoods in Nijmegen. Perimeters are described by coordinates in a polygon. Unfortunately, Geospark cannot display whole Polygons on a map, only Geometric points, but let's try to display each neighbourhood's centroid in the upcoming cells. ",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:41+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_1271173131",
+      "id": "paragraph_1634902028153_901752764",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:41+0000",
+      "dateFinished": "2022-02-11T11:57:41+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27189",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Which neighbourhood has the most artworks?</h2>\n<p>We will continue our journey. The following csv file consists of the neighbourhoods in Nijmegen. Perimeters are described by coordinates in a polygon. Unfortunately, Geospark cannot display whole Polygons on a map, only Geometric points, but let&rsquo;s try to display each neighbourhood&rsquo;s centroid in the upcoming cells.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval quarterDATA = spark.read\n        .format(\"csv\")\n        .option(\"header\", true)\n        .option(\"multiLine\", true)\n        .option(\"inferSchema\", \"true\")\n        .load(\"file:///opt/hadoop/share/data/GEO_IND_WIJKEN.csv\").cache()\nquarterDATA.createOrReplaceTempView(\"quarterDATA\")\nquarterDATA.show(10)\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:18+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=18",
+              "$$hashKey": "object:31137"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=19",
+              "$$hashKey": "object:31138"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=20",
+              "$$hashKey": "object:31139"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_180679796",
+      "id": "paragraph_1634902028527_1230351548",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:18+0000",
+      "dateFinished": "2022-02-11T10:46:19+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27190"
+    },
+    {
+      "text": "%md\nTake a look at the coordinates in this dataset. Can you spot an important difference between these coordinates and the Artworks' coordinates?",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:39+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983912_700614112",
+      "id": "paragraph_1635177361520_1809109551",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:39+0000",
+      "dateFinished": "2022-02-11T11:57:39+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27191",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Take a look at the coordinates in this dataset. Can you spot an important difference between these coordinates and the Artworks&rsquo; coordinates?</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nquarterDATA.select(\"GEOMETRIE\").head()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:19+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=21",
+              "$$hashKey": "object:31235"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_394581635",
+      "id": "paragraph_1635177298685_1102839527",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:19+0000",
+      "dateFinished": "2022-02-11T10:46:19+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27192"
+    },
+    {
+      "text": "%md\n\nThe coordinates of the quarters are stored in a different format. Around the world, different coordinate systems exist. The one used here is an official Dutch system known as RD New. We need to transform the coordinate system to WGS:84, which are the latitude/longitude pairs used in, for example, Google Maps, Open Streetmap, and our GeoSpark.\n\nLook at the [Sedona SQL documentation](https://sedona.apache.org/api/sql/Function/) to see what each function does. We selected the relevant columns for our research and created a temporary view out of it.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:38+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_1749042484",
+      "id": "paragraph_1635177651048_1047809118",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:38+0000",
+      "dateFinished": "2022-02-11T11:57:38+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27193",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>The coordinates of the quarters are stored in a different format. Around the world, different coordinate systems exist. The one used here is an official Dutch system known as RD New. We need to transform the coordinate system to WGS:84, which are the latitude/longitude pairs used in, for example, Google Maps, Open Streetmap, and our GeoSpark.</p>\n<p>Look at the <a href=\"https://sedona.apache.org/api/sql/Function/\">Sedona SQL documentation</a> to see what each function does. We selected the relevant columns for our research and created a temporary view out of it.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval quarters = spark.sql(\n    \"\"\"\n    |SELECT id, WIJKNAAM AS quarter, ST_FlipCoordinates(ST_Transform(ST_GeomFromWKT(GEOMETRIE), 'epsg:28992', 'epsg:4326')) AS coordinates\n    |FROM quarterDATA\n    \"\"\".stripMargin)\nquarters.createOrReplaceTempView(\"quarters\")\nquarters.show(10)\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:19+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=22",
+              "$$hashKey": "object:31323"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_91237075",
+      "id": "paragraph_1634902028882_2097848857",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:19+0000",
+      "dateFinished": "2022-02-11T10:46:21+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27194"
+    },
+    {
+      "text": "%md\nNow let's display the centroids of the neighbourhoods on a map:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:37+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_1836935922",
+      "id": "paragraph_1639052272521_648258582",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:37+0000",
+      "dateFinished": "2022-02-11T11:57:37+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27195",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Now let&rsquo;s display the centroids of the neighbourhoods on a map:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nselect quarter, ST_Centroid(coordinates) as centroids\nfrom quarters",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:59:38+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "geospark-zeppelin",
+              "height": 300,
+              "optionOpen": true,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "quarter": "string",
+                      "centroids": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "geospark-zeppelin": {
+                  "info": {
+                    "name": "quarter",
+                    "index": 0,
+                    "aggr": "sum"
+                  },
+                  "geometry": {
+                    "name": "centroids",
+                    "index": 1,
+                    "aggr": "sum"
+                  }
+                }
+              }
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=23",
+              "$$hashKey": "object:34338"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_1940697801",
+      "id": "paragraph_1639052296455_1017172372",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:21+0000",
+      "dateFinished": "2022-02-11T10:46:21+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27196"
+    },
+    {
+      "text": "%md\n## Joining the datasets together\nThe next cell joins the coordinates of the artworks to its corresponding quarter. See how we used a join on the temporary views `artMap` and `quarters` here? This wouldn't have worked if we had not created the temporary view `artMap` earlier on.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:35+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_998957083",
+      "id": "paragraph_1635000356142_2143436242",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:35+0000",
+      "dateFinished": "2022-02-11T11:57:35+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27197",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Joining the datasets together</h2>\n<p>The next cell joins the coordinates of the artworks to its corresponding quarter. See how we used a join on the temporary views <code>artMap</code> and <code>quarters</code> here? This wouldn&rsquo;t have worked if we had not created the temporary view <code>artMap</code> earlier on.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nSELECT artMap.name, artMap.year, artMap.coordinates, quarters.quarter\nFROM artMap, quarters\nWHERE ST_Within(artMap.coordinates, quarters.coordinates)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:29+0000",
+      "progress": 66,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "geospark-zeppelin",
+              "height": 300,
+              "optionOpen": true,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "year": "string",
+                      "coordinates": "string",
+                      "quarter": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "geospark-zeppelin": {
+                  "geometry": {
+                    "name": "coordinates",
+                    "index": 2,
+                    "aggr": "sum"
+                  },
+                  "info": {
+                    "name": "name",
+                    "index": 0,
+                    "aggr": "sum"
+                  }
+                }
+              },
+              "commonSetting": {}
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=24",
+              "$$hashKey": "object:31499"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=25",
+              "$$hashKey": "object:31500"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=26",
+              "$$hashKey": "object:31501"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_545220150",
+      "id": "paragraph_1634902029131_409969529",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:22+0000",
+      "dateFinished": "2022-02-11T10:46:23+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27198"
+    },
+    {
+      "text": "%md\n_Parquet files_\n\nThis is a nice dataset. We now know what artwork belongs to which neighbourhood! Say we wanted to store this dataset to a more permanent place for later use. An example format is [Parquet](https://spark.apache.org/docs/latest/sql-data-sources-parquet.html), which is supported by many other data processing systems. Spark SQL provides support for both reading and writing Parquet files that automatically preserves the schema of the original data. \n\nLet's write the result to parquet. Because we did not create an object in the cell above, we run the query again below whilst creating `artQuarters`.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:33+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_326180566",
+      "id": "paragraph_1635000626222_1965118386",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:33+0000",
+      "dateFinished": "2022-02-11T11:57:33+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27199",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p><em>Parquet files</em></p>\n<p>This is a nice dataset. We now know what artwork belongs to which neighbourhood! Say we wanted to store this dataset to a more permanent place for later use. An example format is <a href=\"https://spark.apache.org/docs/latest/sql-data-sources-parquet.html\">Parquet</a>, which is supported by many other data processing systems. Spark SQL provides support for both reading and writing Parquet files that automatically preserves the schema of the original data.</p>\n<p>Let&rsquo;s write the result to parquet. Because we did not create an object in the cell above, we run the query again below whilst creating <code>artQuarters</code>.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval artQuarters = spark.sql(\n    \"\"\"\n    |SELECT artMap.name, artMap.year, artMap.coordinates, quarters.quarter\n    |FROM artMap, quarters\n    |WHERE ST_Within(artMap.coordinates, quarters.coordinates)\n    \"\"\".stripMargin)\nartQuarters.createOrReplaceTempView(\"artQuarters\")\nartQuarters.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:59:50+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=27",
+              "$$hashKey": "object:34343"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=28",
+              "$$hashKey": "object:34344"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=29",
+              "$$hashKey": "object:34345"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983913_1900829285",
+      "id": "paragraph_1634903631192_1459053206",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:23+0000",
+      "dateFinished": "2022-02-11T10:46:24+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27200"
+    },
+    {
+      "text": "%md\nAnd then write it to parquet...",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:30+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_415516970",
+      "id": "paragraph_1635253768036_81288384",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:30+0000",
+      "dateFinished": "2022-02-11T11:57:30+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27201",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>And then write it to parquet&hellip;</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nartQuarters.write.parquet(\"file:///opt/hadoop/share/data/artQuarters.parquet\")",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:24+0000",
+      "progress": 66,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=30",
+              "$$hashKey": "object:31695"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=31",
+              "$$hashKey": "object:31696"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=32",
+              "$$hashKey": "object:31697"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_1706165266",
+      "id": "paragraph_1634907252087_944605423",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:24+0000",
+      "dateFinished": "2022-02-11T10:46:26+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27202"
+    },
+    {
+      "text": "%md\n### Grouping Artworks per quarter together\nLet's find out which quarter has the most artworks... \nWe wrote the following code using dataframe operators. Do you think you could write it in SQL format?",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:29+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_1585791842",
+      "id": "paragraph_1635000783232_2030036540",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:29+0000",
+      "dateFinished": "2022-02-11T11:57:29+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27203",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h3>Grouping Artworks per quarter together</h3>\n<p>Let&rsquo;s find out which quarter has the most artworks&hellip;<br />\nWe wrote the following code using dataframe operators. Do you think you could write it in SQL format?</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval count = artQuarters.groupBy(\"quarter\").count().orderBy(col(\"count\").desc)\ncount.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:26+0000",
+      "progress": 60,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=33",
+              "$$hashKey": "object:31793"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=34",
+              "$$hashKey": "object:31794"
+            },
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=35",
+              "$$hashKey": "object:31795"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_141230130",
+      "id": "paragraph_1634908054274_621433683",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:26+0000",
+      "dateFinished": "2022-02-11T10:46:28+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27204"
+    },
+    {
+      "text": "%md\n\nWow! The city center has the most artworks. Let's display them! Unfortunately, you might get an error in the cell below. This is due to a bug in de Sedona SQL. We can work around this bug by loading the dataframe again but then from our just stored Parquet file (done in the next couple of cells).",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:27+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_1883250044",
+      "id": "paragraph_1634908109793_237397214",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:27+0000",
+      "dateFinished": "2022-02-11T11:57:27+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27205",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Wow! The city center has the most artworks. Let&rsquo;s display them! Unfortunately, you might get an error in the cell below. This is due to a bug in de Sedona SQL. We can work around this bug by loading the dataframe again but then from our just stored Parquet file (done in the next couple of cells).</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nselect * from artQuarters where quarter == \"Stadscentrum\"",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:46:28+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=36",
+              "$$hashKey": "object:31891"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_453854050",
+      "id": "paragraph_1634903631760_1620984698",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:46:28+0000",
+      "dateFinished": "2022-02-11T10:46:29+0000",
+      "status": "ERROR",
+      "$$hashKey": "object:27206"
+    },
+    {
+      "text": "%spark\nval artQuarters  = spark.read.parquet(\"file:///opt/hadoop/share/data/artQuarters.parquet\").cache()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:12+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=37",
+              "$$hashKey": "object:31939"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_676192709",
+      "id": "paragraph_1634907288552_1546904699",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:12+0000",
+      "dateFinished": "2022-02-11T10:47:12+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27207"
+    },
+    {
+      "text": "%spark\nartQuarters.createOrReplaceTempView(\"artQuarters\")\nartQuarters.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:23+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=38",
+              "$$hashKey": "object:31987"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_41769315",
+      "id": "paragraph_1634907311040_88279001",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:23+0000",
+      "dateFinished": "2022-02-11T10:47:23+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27208"
+    },
+    {
+      "text": "%md\nLet's display all artworks from the city centre on the map.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:23+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_1813784667",
+      "id": "paragraph_1635253849736_744546745",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:23+0000",
+      "dateFinished": "2022-02-11T11:57:23+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27209",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Let&rsquo;s display all artworks from the city centre on the map.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nselect * from artQuarters where quarter == \"Stadscentrum\"",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:23+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "geospark-zeppelin",
+              "height": 300,
+              "optionOpen": true,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "year": "string",
+                      "coordinates": "string",
+                      "quarter": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "geospark-zeppelin": {
+                  "geometry": {
+                    "name": "coordinates",
+                    "index": 2,
+                    "aggr": "sum"
+                  },
+                  "info": {
+                    "name": "year",
+                    "index": 1,
+                    "aggr": "sum"
+                  }
+                }
+              },
+              "commonSetting": {}
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://7c5262ac4b28:4040/jobs/job?id=39",
+              "$$hashKey": "object:32075"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_921665661",
+      "id": "paragraph_1634907322106_156453759",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:23+0000",
+      "dateFinished": "2022-02-11T10:47:24+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27210"
+    },
+    {
+      "text": "%md\nWe completed our main goal of this reader! \n\nNow let's try to make some more interesting queries. You can also play around for a bit. Remember, there is still an Exercises notebook waiting for you, so maybe you want to go do that first. In one of the exercises, your goal is to find out which neighbourhood has the most trees in Nijmegen, so you'll walk through a similar process, but then you do it yourself!",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:20+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_62525944",
+      "id": "paragraph_1635248247472_313065819",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:20+0000",
+      "dateFinished": "2022-02-11T11:57:20+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27211",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>We completed our main goal of this reader!</p>\n<p>Now let&rsquo;s try to make some more interesting queries. You can also play around for a bit. Remember, there is still an Exercises notebook waiting for you, so maybe you want to go do that first. In one of the exercises, your goal is to find out which neighbourhood has the most trees in Nijmegen, so you&rsquo;ll walk through a similar process, but then you do it yourself!</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n## Part II: User-defined functions\nSo far, it has been sufficient to use Spark SQL and Sedona SQL functions in our Dataframes. However, sometimes these built-in functions are not enough for what you want to accomplish. Then, UDFs come in handy and are a powerful tool. Unfortunately, UDF operations are expensive, so only use them when you have no other choice.\n\nSay we got the following dataframe consisting of vegetables and its prices.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:19+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983914_1377742224",
+      "id": "paragraph_1636994129694_1897483327",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:19+0000",
+      "dateFinished": "2022-02-11T11:57:19+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27212",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Part II: User-defined functions</h2>\n<p>So far, it has been sufficient to use Spark SQL and Sedona SQL functions in our Dataframes. However, sometimes these built-in functions are not enough for what you want to accomplish. Then, UDFs come in handy and are a powerful tool. Unfortunately, UDF operations are expensive, so only use them when you have no other choice.</p>\n<p>Say we got the following dataframe consisting of vegetables and its prices.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval df = spark.createDataFrame(Seq(\n  (21749, \"cucumber\", \"1,34\"),\n  (22432, \"carrots\", \"0,85\"),\n  (26945, \"broccoli\", \"1,14\"),\n  (28795, \"onions\", \"unknown\"),\n  (29361, \"garlic\", null),\n  (31679, \"potatoes\", \"4,09\")\n  )).toDF(\"id\", \"product\", \"price\")\ndf.printSchema()\ndf.createOrReplaceTempView(\"df\")\ndf.show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:24+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_116952180",
+      "id": "paragraph_1636994163507_523974020",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:24+0000",
+      "dateFinished": "2022-02-11T10:47:24+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27213"
+    },
+    {
+      "text": "%md\n\nAs you can see, the `price` column has Type:String. We Dutchies are used to writing prices and other decimal numbers with comma's instead of periods (dots). When we try to parse the prices to floats (or doubles, or longs), this fails...",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:17+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_1320460442",
+      "id": "paragraph_1636994164164_1065491515",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:17+0000",
+      "dateFinished": "2022-02-11T11:57:17+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27214",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>As you can see, the <code>price</code> column has Type:String. We Dutchies are used to writing prices and other decimal numbers with comma&rsquo;s instead of periods (dots). When we try to parse the prices to floats (or doubles, or longs), this fails&hellip;</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\ndf.withColumn(\"price_1\", col(\"price\").cast(\"float\")).show()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:24+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_702079348",
+      "id": "paragraph_1636994164573_808099136",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:24+0000",
+      "dateFinished": "2022-02-11T10:47:25+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27215"
+    },
+    {
+      "text": "%md\nLuckily, we can write a UDF to convert the prices to the correct format. \n\n(We can do this by writing a function that converts all dots to comma's and comma's to dots, although I have to say this sounds a bit error-prone to more difficult cases, like 1.999,99). We can also use Java's NumberFormat to parse values by their locale, so let's try that!",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:16+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_1528397319",
+      "id": "paragraph_1636994163907_27287433",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:16+0000",
+      "dateFinished": "2022-02-11T11:57:16+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27216",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Luckily, we can write a UDF to convert the prices to the correct format.</p>\n<p>(We can do this by writing a function that converts all dots to comma&rsquo;s and comma&rsquo;s to dots, although I have to say this sounds a bit error-prone to more difficult cases, like 1.999,99). We can also use Java&rsquo;s NumberFormat to parse values by their locale, so let&rsquo;s try that!</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\n// Use Java's NumberFormat to parse values by their locale \nimport java.text.NumberFormat\nimport java.util.Locale\nval nf = NumberFormat.getInstance(Locale.forLanguageTag(\"nl\")); // Handle floats written as 0,05 instead of 0.05\n\ndef toFloat(s: String): Option[Float] = {\n  try {\n    Some(nf.parse(s).floatValue)\n  } catch {\n    case e: Exception => None\n  }\n}",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:25+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_973106796",
+      "id": "paragraph_1636994165009_2092737531",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:25+0000",
+      "dateFinished": "2022-02-11T10:47:25+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27217"
+    },
+    {
+      "text": "%md\nAnd test it on a sequence of numbers:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:13+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_620974408",
+      "id": "paragraph_1636994165915_1904341392",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:13+0000",
+      "dateFinished": "2022-02-11T11:57:13+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27218",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>And test it on a sequence of numbers:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nSeq( \"0.045\", \"0,054\", \"abc\", null, \"45.789,34\" ).map( x => toFloat(x).getOrElse(null))",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:25+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_1144284391",
+      "id": "paragraph_1636994167733_1922346321",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:25+0000",
+      "dateFinished": "2022-02-11T10:47:25+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27219"
+    },
+    {
+      "text": "%md\nTo use the function on a dataframe column, we pass it to the `udf()` function that defines the UDF for us.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:11+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_1725542864",
+      "id": "paragraph_1636994220858_608657166",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:11+0000",
+      "dateFinished": "2022-02-11T11:57:11+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27220",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>To use the function on a dataframe column, we pass it to the <code>udf()</code> function that defines the UDF for us.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark \nimport org.apache.spark.sql.functions.udf\n\n// Registering a user-defined function that handles null values as well\nval toFloatUDF = udf((f: String) => toFloat(f))\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:26+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983915_1968396163",
+      "id": "paragraph_1636994220671_869757705",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:26+0000",
+      "dateFinished": "2022-02-11T10:47:26+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27221"
+    },
+    {
+      "text": "%md\nNow, we can use the UDF to convert the prices to the correct format:",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:09+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_1806378099",
+      "id": "paragraph_1636994221598_214179313",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:09+0000",
+      "dateFinished": "2022-02-11T11:57:09+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27222",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Now, we can use the UDF to convert the prices to the correct format:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nval df2 = df.withColumn(\"price_1\", toFloatUDF($\"price\"))\ndf2.show()\ndf2.printSchema()",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:26+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_2072011254",
+      "id": "paragraph_1636994221270_1945511876",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:26+0000",
+      "dateFinished": "2022-02-11T10:47:26+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27223"
+    },
+    {
+      "text": "%md\nIf you want to use the UDF in Spark SQL, you must first register it:\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:07+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_601267231",
+      "id": "paragraph_1636994222751_522378275",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:07+0000",
+      "dateFinished": "2022-02-11T11:57:07+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27224",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>If you want to use the UDF in Spark SQL, you must first register it:</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark\nspark.udf.register(\"toFloatUDF\", toFloatUDF)",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:26+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_1589627194",
+      "id": "paragraph_1636994222582_2132451175",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:26+0000",
+      "dateFinished": "2022-02-11T10:47:27+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27225"
+    },
+    {
+      "text": "%spark.sql\nselect id, product, price, toFloatUDF(price) as price_1\nfrom df",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:27+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "id": "string",
+                      "product": "string",
+                      "price": "string",
+                      "price_1": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_1216741439",
+      "id": "paragraph_1636994222405_1844144736",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:27+0000",
+      "dateFinished": "2022-02-11T10:47:27+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27226"
+    },
+    {
+      "text": "%md\nAs a last useful trick, you can list your existing UDFs by using the SQL function below. As you can see, all Sedona SQL functions are also listed in here.",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:57:01+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_1212615704",
+      "id": "paragraph_1636994222243_1599976575",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:57:01+0000",
+      "dateFinished": "2022-02-11T11:57:01+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27227",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>As a last useful trick, you can list your existing UDFs by using the SQL function below. As you can see, all Sedona SQL functions are also listed in here.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%spark.sql\nSHOW USER FUNCTIONS",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T10:47:27+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "function": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_910812396",
+      "id": "paragraph_1636994282515_1324680715",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T10:47:27+0000",
+      "dateFinished": "2022-02-11T10:47:27+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27228"
+    },
+    {
+      "text": "%md\n## Wrap up:\nShow us what you've learnt! You now have the knowledge to work with dataframes and UDFs. \n\nContinue with the exercises in the `A4_Exercises` Notebook and then do the quiz on Brightspace!\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-02-11T11:56:59+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1644575983916_1787722852",
+      "id": "paragraph_1636994313008_1064080042",
+      "dateCreated": "2022-02-11T10:39:43+0000",
+      "dateStarted": "2022-02-11T11:56:59+0000",
+      "dateFinished": "2022-02-11T11:56:59+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:27229",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<h2>Wrap up:</h2>\n<p>Show us what you&rsquo;ve learnt! You now have the knowledge to work with dataframes and UDFs.</p>\n<p>Continue with the exercises in the <code>A4_Exercises</code> Notebook and then do the quiz on Brightspace!</p>\n\n</div>"
+          }
+        ]
+      }
+    }
+  ],
+  "name": "A4_Reader",
+  "id": "2GWQH3REV",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.9.0",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {
+    "isRunning": false
+  },
+  "path": "/A4_Reader"
+}
