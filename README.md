@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project was completed as part of the Big Data course at Radboud University. The course focused on leveraging big data technologies and distributed computing to analyze massive datasets. The final project involved analyzing a 700 GB web archive (WARC) segment from 2016, stored on the university's cluster with HDFS and other big data tools. The primary goal of this project was to perform an in-depth analysis of the images present in Wikipedia pages within the archive, including statistics on image sizes and identifying the largest image.
+This project was completed as part of the Big Data course at Radboud University. The course focused on leveraging big data technologies and distributed computing to analyze massive datasets. The final project involved analyzing a web archive (WARC) segment from 2016, stored on the university's cluster with HDFS and other big data tools. The primary goal of this project was to perform an in-depth analysis of the images present in Wikipedia pages within the archive, including statistics on image sizes and identifying the largest image.
 
 ## Objectives
 
